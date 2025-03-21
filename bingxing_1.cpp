@@ -40,6 +40,8 @@ int main()
        << setw(col4Width1) << "平凡均时间"
        << setw(col5Width1) << "优化总时间"
        << setw(col6Width1) << "优化均时间"
+       << setw(col5Width1) << "展开总时间"
+       << setw(col6Width1) << "展开均时间"
        << "\n";
 
   // 输出表头下分割线
@@ -58,6 +60,7 @@ int main()
 
     double totalTime_Normal = 0.0;
     double totalTime_Better = 0.0;
+    double totalTime_unroll = 0.0;
 
     // 平凡算法
     for (int rep = 0; rep < repeatCount; rep++)
@@ -83,14 +86,43 @@ int main()
       totalTime_Better += duration<double, milli>(end - start).count();
     }
 
+    // 循环展开
+    for (int rep = 0; rep < repeatCount; rep++)
+    {
+      vector<double> sum(n, 0.0);
+      auto start = high_resolution_clock::now();
+      for (int j = 0; j < n; j++)
+      {
+        double scalar = x[j]; // 提前加载，减少重复内存访问
+        int i = 0;
+        // 内层循环展开，每次处理4个元素
+        for (; i <= n - 4; i += 4)
+        {
+          sum[i] += a[j][i] * scalar;
+          sum[i + 1] += a[j][i + 1] * scalar;
+          sum[i + 2] += a[j][i + 2] * scalar;
+          sum[i + 3] += a[j][i + 3] * scalar;
+        }
+        // 处理剩余不足4个的情况
+        for (; i < n; i++)
+        {
+          sum[i] += a[j][i] * scalar;
+        }
+      }
+      auto end = high_resolution_clock::now();
+      totalTime_unroll += duration<double, milli>(end - start).count();
+    }
     double avg_Normal = totalTime_Normal / repeatCount;
     double avg_Better = totalTime_Better / repeatCount;
+    double avg_Unroll = totalTime_unroll / repeatCount;
     cout << left << setw(col1Width) << n
          << left << setw(col2Width) << repeatCount
          << left << setw(col3Width) << totalTime_Normal
          << left << setw(col4Width) << avg_Normal
          << left << setw(col5Width) << totalTime_Better
          << left << setw(col6Width) << avg_Better
+         << left << setw(col5Width) << totalTime_unroll
+         << left << setw(col6Width) << avg_Unroll
          << "\n";
   }
   // 输出表格底部边框

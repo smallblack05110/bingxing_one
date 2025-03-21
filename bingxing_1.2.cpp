@@ -35,7 +35,8 @@ int main()
        << setw(15) << "Normal(ms)"
        << setw(15) << "Better(ms)"
        << setw(15) << "Recursive(ms)"
-       << setw(15) << "Half(ms)" << endl;
+       << setw(15) << "Half(ms)"
+       << setw(15) << "Unroll(ms)" << endl;
 
   for (int n : text_Size)
   {
@@ -43,6 +44,7 @@ int main()
     double totalTime_Better = 0.0;
     double totalTime_Recursive = 0.0;
     double totalTime_Half = 0.0;
+    double totalTime_Unroll = 0.0;
 
     for (int rep = 0; rep < repeatCount; rep++)
     {
@@ -114,6 +116,47 @@ int main()
       sum = vec3[0];
       end = high_resolution_clock::now();
       totalTime_Half += duration<double, milli>(end - start).count();
+      // 循环展开算法
+      vector<int> vec4(n);
+      for (int i = 0; i < n; i++)
+      {
+        vec1[i] = i + 1;
+      }
+
+      sum1 = 0, sum2 = 0;
+      start = high_resolution_clock::now();
+
+      // 初始化数据
+      vector<int> vec5(n);
+      for (int i = 0; i < n; i++)
+      {
+        vec5[i] = i + 1;
+      }
+
+      sum = 0;
+      int i = 0;
+
+      // 4 跳展开循环：每次处理 4 个元素
+      sum1 = 0, sum2 = 0;
+      int sum3 = 0, sum4 = 0;
+      start = high_resolution_clock::now();
+      for (; i <= n - 4; i += 4)
+      {
+        sum1 += vec5[i];
+        sum2 += vec5[i + 1];
+        sum3 += vec5[i + 2];
+        sum4 += vec5[i + 3];
+      }
+
+      // 处理剩余不足 4 个元素的部分
+      for (; i < n; i++)
+      {
+        sum1 += vec5[i];
+      }
+
+      sum = sum1 + sum2 + sum3 + sum4;
+      end = high_resolution_clock::now();
+      totalTime_Unroll += duration<double, milli>(end - start).count();
     }
 
     // 计算每种算法的平均时间
@@ -121,13 +164,15 @@ int main()
     double avgTime_Better = totalTime_Better / repeatCount;
     double avgTime_Recursive = totalTime_Recursive / repeatCount;
     double avgTime_Half = totalTime_Half / repeatCount;
+    double avgTime_Unroll = totalTime_Unroll / repeatCount;
 
     // 输出结果
     cout << setw(10) << n
          << setw(15) << fixed << setprecision(6) << avgTime_Normal
          << setw(15) << avgTime_Better
          << setw(15) << avgTime_Recursive
-         << setw(15) << avgTime_Half << endl;
+         << setw(15) << avgTime_Half
+         << setw(15) << avgTime_Unroll << endl;
   }
 
   return 0;
